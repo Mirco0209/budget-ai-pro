@@ -118,7 +118,7 @@ export const storageService = {
            return demoUser;
         }
         throw new Error('Invalid credentials');
-      },
+      }
 
       // Check Trial Status on Login
       storageService.checkSubscriptionStatus(user);

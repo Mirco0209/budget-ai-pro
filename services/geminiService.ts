@@ -1,4 +1,4 @@
-import { GoogleGenAI, SchemaType } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { storageService } from "./storageService";
 
 // In a real production app, this key should be proxied via a backend.
