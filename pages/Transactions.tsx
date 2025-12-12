@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Calendar, Tag, FileText, ArrowDownLeft, ArrowUpRight, Camera, Loader, Sparkles, Lock, Mic, X } from 'lucide-react';
+import { Plus, Trash2, Calendar, Tag, FileText, ArrowDownLeft, ArrowUpRight, Camera, Loader, Sparkles, Lock, Mic, X, AlertCircle } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { analyzeReceipt, parseNaturalLanguageTransaction } from '../services/geminiService';
 import { Transaction, TransactionType, CATEGORIES, OTHER_SUB_CATEGORIES } from '../types';
@@ -23,10 +23,12 @@ const Transactions: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isListening, setIsListening] = useState(false); 
   const [canUseScanner, setCanUseScanner] = useState(false);
-  
+  const [speechError, setSpeechError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref to keep the speech recognition instance alive across renders
   const recognitionRef = useRef<any>(null);
+  const silenceTimerRef = useRef<any>(null);
   
   const { t, language } = useLanguage();
 
@@ -41,8 +43,9 @@ const Transactions: React.FC = () => {
     // Cleanup function to stop mic if component unmounts
     return () => {
         if (recognitionRef.current) {
-            recognitionRef.current.stop();
+            try { recognitionRef.current.stop(); } catch(e) {}
         }
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     };
   }, []);
 
@@ -92,6 +95,8 @@ const Transactions: React.FC = () => {
   };
 
   const handleVoiceStart = () => {
+    setSpeechError(null);
+
     // Check support
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         alert(t('micError'));
@@ -100,8 +105,7 @@ const Transactions: React.FC = () => {
     
     // If already listening, stop it manually
     if (isListening) {
-        recognitionRef.current?.stop();
-        setIsListening(false);
+        stopListening();
         return;
     }
 
@@ -113,7 +117,7 @@ const Transactions: React.FC = () => {
         recognition.lang = language === 'it' ? 'it-IT' : 'en-US';
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
-        recognition.continuous = false; // Stop after one sentence
+        recognition.continuous = false; 
 
         // Store in Ref to prevent Garbage Collection
         recognitionRef.current = recognition;
@@ -121,11 +125,19 @@ const Transactions: React.FC = () => {
         recognition.onstart = () => {
             setIsListening(true);
             setIsFormOpen(true);
+            // Safety timeout: if no result in 10 seconds, stop
+            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = setTimeout(() => {
+                 if (isListening) {
+                    stopListening();
+                    setSpeechError("Timeout: No speech detected.");
+                 }
+            }, 10000);
         };
 
         recognition.onresult = async (event: any) => {
+            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             const text = event.results[0][0].transcript;
-            console.log("Recognized:", text);
             
             setIsListening(false);
             setIsScanning(true); // Reuse scanning loader for AI processing UI
@@ -142,7 +154,7 @@ const Transactions: React.FC = () => {
                 }));
             } catch (err) {
                 console.error(err);
-                alert("Sorry, I didn't catch that correctly.");
+                setSpeechError("AI parsing failed. Please try again.");
             } finally {
                 setIsScanning(false);
             }
@@ -150,14 +162,24 @@ const Transactions: React.FC = () => {
 
         recognition.onerror = (event: any) => {
             console.error("Speech error", event.error);
+            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             setIsListening(false);
+            
             if (event.error === 'not-allowed') {
-                alert("Microphone permission denied. Please allow access.");
+                setSpeechError("Microphone access denied.");
+            } else if (event.error === 'no-speech') {
+                setSpeechError("No speech detected.");
+            } else {
+                setSpeechError(`Error: ${event.error}`);
             }
         };
 
         recognition.onend = () => {
-            // Safety check: if it ends without result, just reset state
+            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+            // We only set isListening to false here. 
+            // If onresult fired, it's already false. 
+            // If onerror fired, it's already false.
+            // This is just a fallback state cleanup.
             setIsListening(false);
         };
 
@@ -165,13 +187,13 @@ const Transactions: React.FC = () => {
 
     } catch (e) {
         console.error("Mic initialization failed", e);
-        alert("Microphone error.");
+        setSpeechError("Microphone initialization error.");
     }
   };
 
   const stopListening = () => {
       if (recognitionRef.current) {
-          recognitionRef.current.stop();
+          try { recognitionRef.current.stop(); } catch(e) {}
           setIsListening(false);
       }
   };
@@ -299,13 +321,14 @@ const Transactions: React.FC = () => {
       {/* Add Form Panel */}
       {isFormOpen && (
         <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl animate-fade-in mb-8 relative overflow-hidden">
+           {/* Voice/AI Status Overlay */}
            {(isScanning || isListening) && (
                <div className="absolute inset-0 bg-slate-950/90 z-10 flex flex-col items-center justify-center text-center p-4">
                    <div className="relative mb-4">
                        {isListening ? (
                            <div className="relative">
                                <div className="absolute inset-0 bg-red-500 blur-xl opacity-20 animate-pulse rounded-full"></div>
-                               <Mic size={48} className="text-red-500 relative z-10" />
+                               <Mic size={48} className="text-red-500 relative z-10 animate-bounce" />
                            </div>
                        ) : (
                            <Sparkles size={48} className="text-purple-500 animate-pulse" />
@@ -327,6 +350,22 @@ const Transactions: React.FC = () => {
                            </button>
                        </>
                    )}
+               </div>
+           )}
+
+           {/* Error Overlay */}
+           {speechError && (
+               <div className="absolute inset-0 bg-slate-950/90 z-20 flex flex-col items-center justify-center text-center p-4">
+                    <AlertCircle size={48} className="text-red-500 mb-4" />
+                    <h4 className="text-white text-lg font-bold mb-2">Error</h4>
+                    <p className="text-slate-300 mb-6">{speechError}</p>
+                    <button 
+                        type="button"
+                        onClick={() => setSpeechError(null)}
+                        className="bg-slate-800 text-white px-6 py-2 rounded-full border border-slate-700 hover:bg-slate-700"
+                    >
+                        Close
+                    </button>
                </div>
            )}
            
