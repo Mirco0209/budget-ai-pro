@@ -131,7 +131,7 @@ const Dashboard: React.FC = () => {
                 className={`absolute inset-0 rounded-full border-4 border-transparent border-t-${summary.savingsRate >= 20 ? 'green' : 'orange'}-500 transform -rotate-45`} 
                 style={{ opacity: Math.min(summary.savingsRate / 100, 1) }}
               ></div>
-              <span className="text-xs font-bold text-slate-300">{summary.savingsRate > 0 ? 'SAVED' : 'LOW'}</span>
+              <span className="text-xs font-bold text-slate-300">{summary.savingsRate > 0 ? t('saved') : t('low')}</span>
            </div>
         </div>
 
@@ -165,10 +165,10 @@ const Dashboard: React.FC = () => {
                <div className="flex items-center justify-between mb-6">
                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                        <Activity className="text-purple-400" size={20} />
-                       End of Month Projection
+                       {t('projectionTitle')}
                    </h3>
                    <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-1 rounded-full border border-purple-500/20">
-                       AI Predicted
+                       {t('aiPredicted')}
                    </span>
                </div>
                <div className={`h-64 relative ${!canForecast ? 'opacity-20 blur-sm pointer-events-none' : ''}`}>
@@ -198,14 +198,14 @@ const Dashboard: React.FC = () => {
                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
                        <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 backdrop-blur-md flex flex-col items-center text-center">
                            <Lock size={32} className="text-purple-400 mb-2" />
-                           <h4 className="text-white font-bold mb-1">Forecast Locked</h4>
-                           <p className="text-slate-400 text-sm max-w-[200px]">Upgrade to Advanced to see your future balance.</p>
+                           <h4 className="text-white font-bold mb-1">{t('forecastLocked')}</h4>
+                           <p className="text-slate-400 text-sm max-w-[200px]">{t('upgradeToAdvanced')}</p>
                        </div>
                    </div>
                )}
 
                <p className="text-xs text-slate-500 text-center mt-2">
-                   Based on your average daily spending of €{summary.dailyAverage.toFixed(2)}
+                   {t('basedOnAvg')} €{summary.dailyAverage.toFixed(2)}
                </p>
            </div>
 
@@ -257,7 +257,7 @@ const Dashboard: React.FC = () => {
                           </PieChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="h-full flex items-center justify-center text-slate-500">No expenses yet</div>
+                        <div className="h-full flex items-center justify-center text-slate-500">{t('noExpensesYet')}</div>
                     )}
                  </div>
                  <div className="w-full sm:w-1/2 grid grid-cols-2 gap-3 mt-4 sm:mt-0">

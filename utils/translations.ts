@@ -1,3 +1,4 @@
+
 import { Language } from '../types';
 
 export const translations = {
@@ -29,6 +30,8 @@ export const translations = {
     alreadyHaveAccount: "Already have an account?",
     createOne: "Create one",
     demoAccess: "Demo Access",
+    guest: "Guest",
+    adminConsole: "Admin Console",
     
     // Legal
     termsOfService: "Terms of Service",
@@ -45,6 +48,7 @@ export const translations = {
     admin: "Admin Panel",
     financialHealth: "Financial Health",
     good: "Good",
+    appName: "Budget AI",
     
     // Dashboard
     financialOverview: "Financial overview for",
@@ -60,6 +64,14 @@ export const translations = {
     expenseBreakdown: "Expense Breakdown",
     recentActivity: "Recent Activity",
     noActivity: "No recent activity",
+    noExpensesYet: "No expenses yet",
+    projectionTitle: "End of Month Projection",
+    aiPredicted: "AI Predicted",
+    forecastLocked: "Forecast Locked",
+    upgradeToAdvanced: "Upgrade to Advanced to see your future balance.",
+    basedOnAvg: "Based on your average daily spending of",
+    saved: "SAVED",
+    low: "LOW",
     
     // Transactions
     manageMovements: "Manage your daily movements",
@@ -68,13 +80,33 @@ export const translations = {
     date: "Date",
     type: "Type",
     category: "Category",
+    subCategory: "Detail",
     amount: "Amount",
     note: "Note",
     saveEntry: "Save Entry",
     expense: "Expense",
     income: "Income",
     refund: "Refund",
+    scanning: "Scanning...",
+    scanAi: "Scan AI",
+    scanLocked: "Scan Locked",
+    upgradeScan: "Upgrade to the Medium plan to unlock AI Receipt Scanning!",
+    geminiReading: "Gemini is reading your receipt...",
+    autofilled: "Auto-filled by AI",
+    detailsPlaceholder: "Details...",
+    noTransactionsFound: "No transactions found. Add one manually",
+    orScan: "or scan a receipt!",
     
+    // Advisor
+    advisorTitle: "Financial Advisor",
+    advisorSubtitle: "Powered by Gemini 2.5 Flash",
+    welcomeMsg: "Hello! I'm Budget AI. I have access to your current financial data. How can I help you save money today?",
+    inputPlaceholder: "Ask about your budget, savings tips, or expense analysis...",
+    geminiDisclaimer: "Gemini can make mistakes. Consider checking important financial decisions.",
+    advisorLocked: "Advisor Locked",
+    advisorLockedDesc: "AI chat is not available on the Base plan. Upgrade to get personalized financial advice.",
+    unlockAdvisor: "Unlock Advisor",
+
     // Plans & Settings
     settingsTitle: "Settings & Plans",
     settingsDesc: "Manage your profile, preferences, and subscription.",
@@ -97,6 +129,12 @@ export const translations = {
     currentPlan: "Current Plan",
     selectPlan: "Select Plan",
     recommended: "Recommended",
+    unlimitedTx: "Unlimited Tx",
+    noAi: "No AI",
+    unltdAi: "Unltd AI",
+    aiChats: "AI Chats",
+    scanner: "Scanner",
+    forecast: "Forecast",
     
     // Subscription Wall & Payment
     trialExpiredTitle: "Your Free Trial Has Ended",
@@ -139,7 +177,19 @@ export const translations = {
     'Health': 'Health',
     'Income': 'Income',
     'Refund': 'Refund',
-    'Other': 'Other'
+    'Other': 'Other',
+
+    // Sub Categories
+    'Education': 'Education',
+    'Gifts/Donations': 'Gifts/Donations',
+    'Insurance': 'Insurance',
+    'Taxes': 'Taxes',
+    'Pets': 'Pets',
+    'Travel/Vacation': 'Travel/Vacation',
+    'Personal Care': 'Personal Care',
+    'Investments': 'Investments',
+    'Kids': 'Kids',
+    'General': 'General'
   },
   it: {
     // Landing Page
@@ -169,6 +219,8 @@ export const translations = {
     alreadyHaveAccount: "Hai già un account?",
     createOne: "Crealo ora",
     demoAccess: "Accesso Demo",
+    guest: "Ospite",
+    adminConsole: "Console Admin",
     
     // Legal
     termsOfService: "Termini di Servizio",
@@ -185,6 +237,7 @@ export const translations = {
     admin: "Pannello Admin",
     financialHealth: "Salute Finanziaria",
     good: "Buona",
+    appName: "Budget AI",
     
     // Dashboard
     financialOverview: "Panoramica finanziaria di",
@@ -200,6 +253,14 @@ export const translations = {
     expenseBreakdown: "Ripartizione Spese",
     recentActivity: "Attività Recente",
     noActivity: "Nessuna attività recente",
+    noExpensesYet: "Nessuna spesa ancora",
+    projectionTitle: "Proiezione Fine Mese",
+    aiPredicted: "Predetto da AI",
+    forecastLocked: "Previsione Bloccata",
+    upgradeToAdvanced: "Passa ad Advanced per vedere il tuo saldo futuro.",
+    basedOnAvg: "Basato sulla tua spesa media giornaliera di",
+    saved: "RISPARMIO",
+    low: "BASSO",
     
     // Plans & Settings
     settingsTitle: "Impostazioni e Piani",
@@ -223,6 +284,12 @@ export const translations = {
     currentPlan: "Piano Attuale",
     selectPlan: "Seleziona Piano",
     recommended: "Consigliato",
+    unlimitedTx: "Transazioni Illimitate",
+    noAi: "Niente AI",
+    unltdAi: "AI Illimitata",
+    aiChats: "Chat AI",
+    scanner: "Scanner",
+    forecast: "Previsioni",
     
     // Transactions
     manageMovements: "Gestisci i tuoi movimenti",
@@ -231,12 +298,32 @@ export const translations = {
     date: "Data",
     type: "Tipo",
     category: "Categoria",
+    subCategory: "Dettaglio",
     amount: "Importo",
     note: "Nota",
     saveEntry: "Salva",
     expense: "Uscita",
     income: "Entrata",
     refund: "Rimborso",
+    scanning: "Scansione...",
+    scanAi: "Scansione AI",
+    scanLocked: "Scan Bloccato",
+    upgradeScan: "Passa al piano Medium per sbloccare lo Scanner Scontrini AI!",
+    geminiReading: "Gemini sta leggendo lo scontrino...",
+    autofilled: "Compilato da AI",
+    detailsPlaceholder: "Dettagli...",
+    noTransactionsFound: "Nessuna transazione trovata. Aggiungine una manualmente",
+    orScan: "o scansiona uno scontrino!",
+    
+    // Advisor
+    advisorTitle: "Consulente Finanziario",
+    advisorSubtitle: "Potenziato da Gemini 2.5 Flash",
+    welcomeMsg: "Ciao! Sono Budget AI. Ho accesso ai tuoi dati finanziari. Come posso aiutarti a risparmiare oggi?",
+    inputPlaceholder: "Chiedi del tuo budget, consigli di risparmio o analisi spese...",
+    geminiDisclaimer: "Gemini può commettere errori. Controlla le decisioni finanziarie importanti.",
+    advisorLocked: "Consulente Bloccato",
+    advisorLockedDesc: "La chat AI non è disponibile nel piano Base. Effettua l'upgrade per ricevere consigli finanziari personalizzati.",
+    unlockAdvisor: "Sblocca Consulente",
     
     // Subscription Wall & Payment
     trialExpiredTitle: "Il periodo di prova è terminato",
@@ -279,7 +366,19 @@ export const translations = {
     'Health': 'Salute',
     'Income': 'Entrate',
     'Refund': 'Rimborsi',
-    'Other': 'Altro'
+    'Other': 'Altro',
+
+    // Sub Categories
+    'Education': 'Istruzione',
+    'Gifts/Donations': 'Regali/Donazioni',
+    'Insurance': 'Assicurazione',
+    'Taxes': 'Tasse',
+    'Pets': 'Animali Domestici',
+    'Travel/Vacation': 'Viaggi/Vacanze',
+    'Personal Care': 'Cura Personale',
+    'Investments': 'Investimenti',
+    'Kids': 'Bambini',
+    'General': 'Generale'
   }
 };
 

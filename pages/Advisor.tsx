@@ -1,20 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Lock } from 'lucide-react';
 import { generateFinancialAdvice } from '../services/geminiService';
-import { ChatMessage } from '../types';
+import { ChatMessage, PLANS } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
+import { storageService } from '../services/storageService';
 
 const Advisor: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      role: 'model',
-      text: "Hello! I'm Budget AI. I have access to your current financial data. How can I help you save money today?",
-      timestamp: Date.now()
-    }
-  ]);
+  const { t } = useLanguage();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check Plan Limits
+    const settings = storageService.getSettings();
+    const plan = PLANS[settings.plan];
+    
+    // If AI Limit is 0 (Base plan), lock the page
+    if (plan.aiLimit === 0) {
+        setIsLocked(true);
+    } else {
+        setMessages([
+            {
+              id: 'welcome',
+              role: 'model',
+              text: t('welcomeMsg'),
+              timestamp: Date.now()
+            }
+        ]);
+    }
+  }, [t]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -26,7 +44,7 @@ const Advisor: React.FC = () => {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isLocked) return;
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -56,14 +74,36 @@ const Advisor: React.FC = () => {
     setIsLoading(false);
   };
 
+  if (isLocked) {
+      return (
+        <div className="h-[calc(100vh-8rem)] flex flex-col items-center justify-center p-6 text-center">
+            <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md w-full shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent"></div>
+                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Lock size={32} className="text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">{t('advisorLocked')}</h2>
+                <p className="text-slate-400 mb-8 leading-relaxed">
+                    {t('advisorLockedDesc')}
+                </p>
+                {/* We don't have a direct link to Plans from here in the mock, but conceptually it guides them */}
+                <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
+                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">{t('recommended')}</p>
+                    <p className="text-white font-semibold">Savings Medium / Advanced</p>
+                </div>
+            </div>
+        </div>
+      );
+  }
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col">
       <div className="mb-4">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
            <Sparkles className="text-primary" />
-           Financial Advisor
+           {t('advisorTitle')}
         </h2>
-        <p className="text-slate-400">Powered by Gemini 2.5 Flash</p>
+        <p className="text-slate-400">{t('advisorSubtitle')}</p>
       </div>
 
       <div className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
@@ -116,7 +156,7 @@ const Advisor: React.FC = () => {
                  type="text" 
                  value={input}
                  onChange={(e) => setInput(e.target.value)}
-                 placeholder="Ask about your budget, savings tips, or expense analysis..."
+                 placeholder={t('inputPlaceholder')}
                  className="w-full bg-slate-900 text-white rounded-xl py-4 pl-5 pr-14 focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary/50 placeholder-slate-500"
               />
               <button 
@@ -128,7 +168,7 @@ const Advisor: React.FC = () => {
               </button>
            </form>
            <p className="text-center text-[10px] text-slate-600 mt-2">
-              Gemini can make mistakes. Consider checking important financial decisions.
+              {t('geminiDisclaimer')}
            </p>
         </div>
       </div>

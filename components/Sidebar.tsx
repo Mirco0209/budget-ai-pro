@@ -55,11 +55,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, onLogout }
         </div>
         <div className="overflow-hidden">
           <h1 className="font-bold text-lg tracking-tight text-white truncate">
-            {isAdmin ? 'Admin Console' : 'Budget AI'}
+            {isAdmin ? t('adminConsole') : t('appName')}
           </h1>
           <div className="flex items-center text-xs text-slate-400">
              <UserIcon size={10} className="mr-1" />
-             <span className="truncate">{user?.name || 'Guest'}</span>
+             <span className="truncate">{user?.name || t('guest')}</span>
           </div>
         </div>
       </div>

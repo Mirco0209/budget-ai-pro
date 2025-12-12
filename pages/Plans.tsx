@@ -290,19 +290,19 @@ const Plans: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 mb-4">
                     <div className="flex items-center text-xs text-slate-300">
                         <Check size={12} className="mr-2 text-primary" />
-                        Unlimited Tx
+                        {t('unlimitedTx')}
                     </div>
                     <div className="flex items-center text-xs text-slate-300">
                         <Zap size={12} className={`mr-2 ${plan.aiLimit > 0 ? 'text-yellow-400' : 'text-slate-600'}`} />
-                        {plan.aiLimit === 0 ? 'No AI' : plan.aiLimit > 1000 ? 'Unltd AI' : `${plan.aiLimit} AI Chats`}
+                        {plan.aiLimit === 0 ? t('noAi') : plan.aiLimit > 1000 ? t('unltdAi') : `${plan.aiLimit} ${t('aiChats')}`}
                     </div>
                     <div className={`flex items-center text-xs ${hasScanner(key) ? 'text-slate-300' : 'text-slate-600'}`}>
                         {hasScanner(key) ? <Camera size={12} className="mr-2 text-blue-400" /> : <X size={12} className="mr-2" />}
-                        Scanner
+                        {t('scanner')}
                     </div>
                     <div className={`flex items-center text-xs ${hasForecast(key) ? 'text-slate-300' : 'text-slate-600'}`}>
                         {hasForecast(key) ? <Activity size={12} className="mr-2 text-purple-400" /> : <X size={12} className="mr-2" />}
-                        Forecast
+                        {t('forecast')}
                     </div>
                 </div>
 

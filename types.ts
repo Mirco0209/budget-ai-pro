@@ -1,3 +1,4 @@
+
 export type TransactionType = 'income' | 'expense' | 'refund';
 
 export type Language = 'en' | 'it';
@@ -47,6 +48,19 @@ export const CATEGORIES = [
   'Income',
   'Refund',
   'Other'
+];
+
+export const OTHER_SUB_CATEGORIES = [
+  'Education',
+  'Gifts/Donations',
+  'Insurance',
+  'Taxes',
+  'Pets',
+  'Travel/Vacation',
+  'Personal Care',
+  'Investments',
+  'Kids',
+  'General'
 ];
 
 export const PLANS = {

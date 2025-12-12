@@ -2,10 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, Calendar, Tag, FileText, ArrowDownLeft, ArrowUpRight, Camera, Loader, Sparkles, Lock } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { analyzeReceipt } from '../services/geminiService';
-import { Transaction, TransactionType, CATEGORIES } from '../types';
+import { Transaction, TransactionType, CATEGORIES, OTHER_SUB_CATEGORIES } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Transactions: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  
+  // Local state to manage the 2-step category selection
+  const [mainCategory, setMainCategory] = useState<string>('Other');
+  
   const [formData, setFormData] = useState<Partial<Transaction>>({
     date: new Date().toISOString().split('T')[0],
     amount: 0,
@@ -18,6 +23,7 @@ const Transactions: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [canUseScanner, setCanUseScanner] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     setTransactions(storageService.getTransactions().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -27,6 +33,18 @@ const Transactions: React.FC = () => {
     const allowedPlans = ['medium', 'advanced', 'ultra'];
     setCanUseScanner(allowedPlans.includes(settings.plan));
   }, []);
+
+  // Update mainCategory state when formData changes (e.g. after scan)
+  useEffect(() => {
+    if (formData.category) {
+        if (CATEGORIES.includes(formData.category)) {
+            setMainCategory(formData.category);
+        } else {
+            // It's a sub-category, so main is "Other"
+            setMainCategory('Other');
+        }
+    }
+  }, [formData.category]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +64,8 @@ const Transactions: React.FC = () => {
     setIsFormOpen(false);
     
     // Reset form partially
-    setFormData({ ...formData, amount: 0, note: '' });
+    setFormData({ ...formData, amount: 0, note: '', category: 'Other' });
+    setMainCategory('Other');
   };
 
   const handleDelete = (id: string) => {
@@ -56,7 +75,7 @@ const Transactions: React.FC = () => {
 
   const handleScanClick = () => {
     if (!canUseScanner) {
-        alert("Upgrade to the Medium plan to unlock AI Receipt Scanning!");
+        alert(t('upgradeScan'));
         return;
     }
     fileInputRef.current?.click();
@@ -96,6 +115,16 @@ const Transactions: React.FC = () => {
     }
   };
 
+  const handleMainCategoryChange = (val: string) => {
+      setMainCategory(val);
+      if (val !== 'Other') {
+          setFormData({ ...formData, category: val });
+      } else {
+          // Default sub-category when switching to Other
+          setFormData({ ...formData, category: OTHER_SUB_CATEGORIES[0] });
+      }
+  };
+
   const getTypeColor = (type: TransactionType) => {
     switch (type) {
       case 'income': return 'text-green-400 bg-green-400/10';
@@ -116,8 +145,8 @@ const Transactions: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Transactions</h2>
-          <p className="text-slate-400">Manage your daily movements</p>
+          <h2 className="text-2xl font-bold text-white">{t('transactions')}</h2>
+          <p className="text-slate-400">{t('manageMovements')}</p>
         </div>
         <div className="flex space-x-2">
             <button 
@@ -137,7 +166,7 @@ const Transactions: React.FC = () => {
                     <Camera size={18} />
                 )}
                 <span className="hidden md:inline">
-                    {isScanning ? 'Scanning...' : canUseScanner ? 'Scan AI' : 'Scan Locked'}
+                    {isScanning ? t('scanning') : canUseScanner ? t('scanAi') : t('scanLocked')}
                 </span>
             </button>
             <input 
@@ -154,7 +183,7 @@ const Transactions: React.FC = () => {
             className="flex items-center space-x-2 bg-primary hover:bg-orange-600 text-white px-4 py-2 rounded-full font-medium transition-all shadow-lg shadow-primary/20"
             >
             <Plus size={18} />
-            <span className="hidden md:inline">Add New</span>
+            <span className="hidden md:inline">{t('addNew')}</span>
             </button>
         </div>
       </div>
@@ -167,17 +196,17 @@ const Transactions: React.FC = () => {
                    <div className="relative">
                        <Sparkles size={48} className="text-purple-500 animate-pulse" />
                    </div>
-                   <p className="text-purple-300 mt-4 font-medium">Gemini is reading your receipt...</p>
+                   <p className="text-purple-300 mt-4 font-medium">{t('geminiReading')}</p>
                </div>
            )}
            
            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-               New Entry
-               {formData.note?.includes('Receipt') && <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full">Auto-filled by AI</span>}
+               {t('newEntry')}
+               {formData.note?.includes('Receipt') && <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full">{t('autofilled')}</span>}
            </h3>
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Date</label>
+                <label className="block text-xs text-slate-400 mb-1">{t('date')}</label>
                 <div className="relative">
                    <Calendar size={16} className="absolute left-3 top-3 text-slate-500" />
                    <input 
@@ -190,34 +219,48 @@ const Transactions: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Type</label>
+                <label className="block text-xs text-slate-400 mb-1">{t('type')}</label>
                 <select 
                     value={formData.type}
                     onChange={e => setFormData({...formData, type: e.target.value as TransactionType})}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary text-white"
                 >
-                    <option value="expense">Expense</option>
-                    <option value="income">Income</option>
-                    <option value="refund">Refund</option>
+                    <option value="expense">{t('expense')}</option>
+                    <option value="income">{t('income')}</option>
+                    <option value="refund">{t('refund')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Category</label>
+                <label className="block text-xs text-slate-400 mb-1">{t('category')}</label>
                  <div className="relative">
                    <Tag size={16} className="absolute left-3 top-3 text-slate-500" />
                    <select 
-                      value={formData.category}
-                      onChange={e => setFormData({...formData, category: e.target.value})}
+                      value={mainCategory}
+                      onChange={e => handleMainCategoryChange(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-3 text-sm focus:outline-none focus:border-primary text-white"
                    >
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      {CATEGORIES.map(c => <option key={c} value={c}>{t(c as any)}</option>)}
                    </select>
                 </div>
               </div>
+              
+              {/* Conditional Sub-Category Menu */}
+              {mainCategory === 'Other' && (
+                <div className="animate-fade-in">
+                    <label className="block text-xs text-slate-400 mb-1">{t('subCategory')}</label>
+                    <select 
+                        value={formData.category}
+                        onChange={e => setFormData({...formData, category: e.target.value})}
+                        className="w-full bg-slate-950 border border-primary/50 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary text-white bg-slate-800/50"
+                    >
+                        {OTHER_SUB_CATEGORIES.map(c => <option key={c} value={c}>{t(c as any)}</option>)}
+                    </select>
+                </div>
+              )}
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Amount (€)</label>
+                <label className="block text-xs text-slate-400 mb-1">{t('amount')} (€)</label>
                 <input 
                   type="number" 
                   step="0.01"
@@ -228,8 +271,8 @@ const Transactions: React.FC = () => {
                 />
               </div>
 
-              <div>
-                 <label className="block text-xs text-slate-400 mb-1">Note</label>
+              <div className={mainCategory === 'Other' ? "lg:col-span-5" : ""}>
+                 <label className="block text-xs text-slate-400 mb-1">{t('note')}</label>
                  <div className="relative">
                     <FileText size={16} className="absolute left-3 top-3 text-slate-500" />
                     <input 
@@ -237,14 +280,14 @@ const Transactions: React.FC = () => {
                       value={formData.note}
                       onChange={e => setFormData({...formData, note: e.target.value})}
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-3 text-sm focus:outline-none focus:border-primary text-white"
-                      placeholder="Details..." 
+                      placeholder={t('detailsPlaceholder')} 
                     />
                  </div>
               </div>
            </div>
            <div className="mt-4 flex justify-end">
               <button type="submit" className="bg-white text-slate-950 px-6 py-2 rounded-lg font-semibold hover:bg-slate-200 transition-colors text-sm">
-                Save Entry
+                {t('saveEntry')}
               </button>
            </div>
         </form>
@@ -256,11 +299,11 @@ const Transactions: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-950 text-slate-400 text-xs uppercase tracking-wider">
-                <th className="p-4 border-b border-slate-800">Date</th>
-                <th className="p-4 border-b border-slate-800">Type</th>
-                <th className="p-4 border-b border-slate-800">Category</th>
-                <th className="p-4 border-b border-slate-800">Note</th>
-                <th className="p-4 border-b border-slate-800 text-right">Amount</th>
+                <th className="p-4 border-b border-slate-800">{t('date')}</th>
+                <th className="p-4 border-b border-slate-800">{t('type')}</th>
+                <th className="p-4 border-b border-slate-800">{t('category')}</th>
+                <th className="p-4 border-b border-slate-800">{t('note')}</th>
+                <th className="p-4 border-b border-slate-800 text-right">{t('amount')}</th>
                 <th className="p-4 border-b border-slate-800 w-10"></th>
               </tr>
             </thead>
@@ -271,10 +314,10 @@ const Transactions: React.FC = () => {
                   <td className="p-4">
                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(tx.type)}`}>
                         {getTypeIcon(tx.type)}
-                        <span className="ml-1 capitalize">{tx.type}</span>
+                        <span className="ml-1 capitalize">{t(tx.type as any)}</span>
                      </span>
                   </td>
-                  <td className="p-4 text-sm text-slate-300">{tx.category}</td>
+                  <td className="p-4 text-sm text-slate-300">{t(tx.category as any) || tx.category}</td>
                   <td className="p-4 text-sm text-slate-400">{tx.note || '-'}</td>
                   <td className={`p-4 text-sm font-semibold text-right ${tx.type === 'expense' ? 'text-white' : 'text-green-400'}`}>
                     {tx.type === 'expense' ? '-' : '+'}€{tx.amount.toFixed(2)}
@@ -292,7 +335,7 @@ const Transactions: React.FC = () => {
               {transactions.length === 0 && (
                 <tr>
                     <td colSpan={6} className="p-8 text-center text-slate-500">
-                        No transactions found. Add one manually {canUseScanner ? 'or scan a receipt!' : ''}
+                        {t('noTransactionsFound')} {canUseScanner ? t('orScan') : ''}
                     </td>
                 </tr>
               )}
