@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Calendar, Tag, FileText, ArrowDownLeft, ArrowUpRight, Camera, Loader, Sparkles, Lock } from 'lucide-react';
+import { Plus, Trash2, Calendar, Tag, FileText, ArrowDownLeft, ArrowUpRight, Camera, Loader, Sparkles, Lock, Mic, X } from 'lucide-react';
 import { storageService } from '../services/storageService';
-import { analyzeReceipt } from '../services/geminiService';
+import { analyzeReceipt, parseNaturalLanguageTransaction } from '../services/geminiService';
 import { Transaction, TransactionType, CATEGORIES, OTHER_SUB_CATEGORIES } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -21,26 +21,37 @@ const Transactions: React.FC = () => {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isListening, setIsListening] = useState(false); 
   const [canUseScanner, setCanUseScanner] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { t } = useLanguage();
+  // Ref to keep the speech recognition instance alive across renders
+  const recognitionRef = useRef<any>(null);
+  
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     setTransactions(storageService.getTransactions().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     
-    // Check Plan for Scanner Feature (Available on Medium, Advanced, Ultra)
+    // Check Plan for Scanner Feature
     const settings = storageService.getSettings();
     const allowedPlans = ['medium', 'advanced', 'ultra'];
     setCanUseScanner(allowedPlans.includes(settings.plan));
+
+    // Cleanup function to stop mic if component unmounts
+    return () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
+    };
   }, []);
 
-  // Update mainCategory state when formData changes (e.g. after scan)
+  // Update mainCategory state when formData changes
   useEffect(() => {
     if (formData.category) {
         if (CATEGORIES.includes(formData.category)) {
             setMainCategory(formData.category);
         } else {
-            // It's a sub-category, so main is "Other"
             setMainCategory('Other');
         }
     }
@@ -63,7 +74,6 @@ const Transactions: React.FC = () => {
     setTransactions(updated.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setIsFormOpen(false);
     
-    // Reset form partially
     setFormData({ ...formData, amount: 0, note: '', category: 'Other' });
     setMainCategory('Other');
   };
@@ -81,15 +91,99 @@ const Transactions: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const handleVoiceStart = () => {
+    // Check support
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert(t('micError'));
+        return;
+    }
+    
+    // If already listening, stop it manually
+    if (isListening) {
+        recognitionRef.current?.stop();
+        setIsListening(false);
+        return;
+    }
+
+    try {
+        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        // Configuration
+        recognition.lang = language === 'it' ? 'it-IT' : 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false; // Stop after one sentence
+
+        // Store in Ref to prevent Garbage Collection
+        recognitionRef.current = recognition;
+
+        recognition.onstart = () => {
+            setIsListening(true);
+            setIsFormOpen(true);
+        };
+
+        recognition.onresult = async (event: any) => {
+            const text = event.results[0][0].transcript;
+            console.log("Recognized:", text);
+            
+            setIsListening(false);
+            setIsScanning(true); // Reuse scanning loader for AI processing UI
+            
+            try {
+                const data = await parseNaturalLanguageTransaction(text);
+                setFormData(prev => ({
+                    ...prev,
+                    amount: data.amount || 0,
+                    type: data.type || 'expense',
+                    date: data.date || new Date().toISOString().split('T')[0],
+                    category: data.category || 'Other',
+                    note: data.note || text // Use transcribed text as fallback
+                }));
+            } catch (err) {
+                console.error(err);
+                alert("Sorry, I didn't catch that correctly.");
+            } finally {
+                setIsScanning(false);
+            }
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error("Speech error", event.error);
+            setIsListening(false);
+            if (event.error === 'not-allowed') {
+                alert("Microphone permission denied. Please allow access.");
+            }
+        };
+
+        recognition.onend = () => {
+            // Safety check: if it ends without result, just reset state
+            setIsListening(false);
+        };
+
+        recognition.start();
+
+    } catch (e) {
+        console.error("Mic initialization failed", e);
+        alert("Microphone error.");
+    }
+  };
+
+  const stopListening = () => {
+      if (recognitionRef.current) {
+          recognitionRef.current.stop();
+          setIsListening(false);
+      }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsScanning(true);
-    setIsFormOpen(true); // Ensure form is visible
+    setIsFormOpen(true);
 
     try {
-      // Convert to base64
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = async () => {
@@ -109,7 +203,7 @@ const Transactions: React.FC = () => {
         } finally {
             setIsScanning(false);
         }
-      };
+    };
     } catch (error) {
         setIsScanning(false);
     }
@@ -120,7 +214,6 @@ const Transactions: React.FC = () => {
       if (val !== 'Other') {
           setFormData({ ...formData, category: val });
       } else {
-          // Default sub-category when switching to Other
           setFormData({ ...formData, category: OTHER_SUB_CATEGORIES[0] });
       }
   };
@@ -149,9 +242,24 @@ const Transactions: React.FC = () => {
           <p className="text-slate-400">{t('manageMovements')}</p>
         </div>
         <div className="flex space-x-2">
+            {/* Voice Input Button */}
+            <button
+                onClick={handleVoiceStart}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full font-medium transition-all border ${
+                   isListening 
+                   ? 'bg-red-500/20 text-red-500 border-red-500/50 animate-pulse' 
+                   : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
+                }`}
+            >
+                {isListening ? <X size={18} /> : <Mic size={18} />}
+                <span className="hidden md:inline">
+                   {isListening ? t('listening') : t('voiceInput')}
+                </span>
+            </button>
+
             <button 
                 onClick={handleScanClick}
-                disabled={isScanning}
+                disabled={isScanning || isListening}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-full font-medium transition-all border ${
                     canUseScanner 
                     ? 'bg-slate-800 hover:bg-slate-700 text-purple-400 border-purple-500/30' 
@@ -191,12 +299,34 @@ const Transactions: React.FC = () => {
       {/* Add Form Panel */}
       {isFormOpen && (
         <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl animate-fade-in mb-8 relative overflow-hidden">
-           {isScanning && (
-               <div className="absolute inset-0 bg-slate-950/80 z-10 flex flex-col items-center justify-center">
-                   <div className="relative">
-                       <Sparkles size={48} className="text-purple-500 animate-pulse" />
+           {(isScanning || isListening) && (
+               <div className="absolute inset-0 bg-slate-950/90 z-10 flex flex-col items-center justify-center text-center p-4">
+                   <div className="relative mb-4">
+                       {isListening ? (
+                           <div className="relative">
+                               <div className="absolute inset-0 bg-red-500 blur-xl opacity-20 animate-pulse rounded-full"></div>
+                               <Mic size={48} className="text-red-500 relative z-10" />
+                           </div>
+                       ) : (
+                           <Sparkles size={48} className="text-purple-500 animate-pulse" />
+                       )}
                    </div>
-                   <p className="text-purple-300 mt-4 font-medium">{t('geminiReading')}</p>
+                   <h4 className="text-white text-lg font-bold mb-1">
+                       {isListening ? t('listening') : t('processingAudio')}
+                   </h4>
+                   
+                   {isListening && (
+                       <>
+                           <p className="text-sm text-slate-300 mb-6 italic max-w-xs">"{t('voiceCommandHint')}"</p>
+                           <button 
+                             type="button" 
+                             onClick={stopListening}
+                             className="bg-slate-800 text-white px-4 py-2 rounded-full text-sm border border-slate-700 hover:bg-slate-700"
+                           >
+                             Cancel
+                           </button>
+                       </>
+                   )}
                </div>
            )}
            

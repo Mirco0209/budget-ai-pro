@@ -1,4 +1,4 @@
-import { Transaction, UserSettings, User, SubscriptionStatus } from '../types';
+import { Transaction, UserSettings, TransactionType, User, SubscriptionStatus } from '../types';
 
 const STORAGE_KEYS = {
   TRANSACTIONS_PREFIX: 'budget_ai_transactions_',
@@ -66,11 +66,15 @@ export const storageService = {
       if (users.find(u => u.email === user.email)) {
         throw new Error('Email already registered');
       }
+      
       const newUser: User = { 
-        ...user, 
+        name: user.name,
+        email: user.email,
+        password: user.password, // Explicit assignment
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString()
       };
+      
       users.push(newUser);
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
       
@@ -91,6 +95,7 @@ export const storageService = {
              id: 'admin_master',
              name: 'System Admin',
              email: 'admin@budgetai.com',
+             password: 'admin',
              createdAt: new Date().toISOString()
          };
          // Admin always active
@@ -101,16 +106,19 @@ export const storageService = {
       }
 
       const users = storageService.auth.getUsers();
-      // Simple mock check
+      
+      // Find user matching credentials
       const user = users.find(u => u.email === email && u.password === password);
       
       if (!user) {
-        // Fallback for demo
+        // Fallback for demo logic
+        // If no users exist OR specific demo credentials are used
         if ((users.length === 0 || email === 'demo@example.com') && password === 'demo') {
            const demoUser: User = { 
              id: 'demo_user_id', 
              name: 'Mirco (Demo)', 
              email: 'demo@example.com',
+             password: 'demo',
              createdAt: new Date().toISOString() // Demo starts fresh on login
            };
            // Note: Settings for demo user are handled in getSettings to persist Admin changes

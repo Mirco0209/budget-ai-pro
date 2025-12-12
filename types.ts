@@ -9,7 +9,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password?: string; // In a real app, never store plain text passwords
+  password: string; // Mandatory for auth to work correctly
   createdAt: string; // ISO Date
 }
 

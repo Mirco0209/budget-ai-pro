@@ -95,3 +95,34 @@ export const analyzeReceipt = async (base64Image: string): Promise<any> => {
     throw new Error("Failed to analyze receipt");
   }
 };
+
+export const parseNaturalLanguageTransaction = async (text: string): Promise<any> => {
+    try {
+        const prompt = `
+          Extract transaction details from this text: "${text}".
+          
+          Return a JSON object with:
+          - amount: number
+          - type: 'income' | 'expense' | 'refund'
+          - category: One from ['Housing/Bills', 'Transportation', 'Food/Dining', 'Shopping', 'Entertainment', 'Health', 'Income', 'Refund', 'Other']
+          - date: ISO YYYY-MM-DD (assume today if not specified)
+          - note: A short description of the item.
+
+          Example input: "Ho speso 20 euro per la pizza"
+          Example output: { "amount": 20, "type": "expense", "category": "Food/Dining", "date": "2023-10-27", "note": "Pizza" }
+
+          Return ONLY JSON.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        });
+
+        const jsonStr = response.text?.replace(/```json/g, '').replace(/```/g, '').trim() || "{}";
+        return JSON.parse(jsonStr);
+    } catch (error) {
+        console.error("NLP Error:", error);
+        throw new Error("Failed to parse voice input");
+    }
+};

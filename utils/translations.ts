@@ -96,6 +96,11 @@ export const translations = {
     detailsPlaceholder: "Details...",
     noTransactionsFound: "No transactions found. Add one manually",
     orScan: "or scan a receipt!",
+    voiceInput: "Voice Input",
+    listening: "Listening...",
+    processingAudio: "AI Processing...",
+    micError: "Microphone access denied or not supported.",
+    voiceCommandHint: "Say something like: 'Spent 20€ for pizza yesterday'",
     
     // Advisor
     advisorTitle: "Financial Advisor",
@@ -314,6 +319,11 @@ export const translations = {
     detailsPlaceholder: "Dettagli...",
     noTransactionsFound: "Nessuna transazione trovata. Aggiungine una manualmente",
     orScan: "o scansiona uno scontrino!",
+    voiceInput: "Input Vocale",
+    listening: "Sto ascoltando...",
+    processingAudio: "Elaborazione AI...",
+    micError: "Accesso al microfono negato o non supportato.",
+    voiceCommandHint: "Dì qualcosa come: 'Ho speso 20 euro per la pizza ieri'",
     
     // Advisor
     advisorTitle: "Consulente Finanziario",
