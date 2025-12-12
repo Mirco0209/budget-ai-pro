@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, User, Search, Edit2, Trash2, Key, Calendar, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import { Shield, User, Search, Edit2, Trash2, Key, Calendar } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { useLanguage } from '../contexts/LanguageContext';
 import { UserSettings, PLANS, SubscriptionStatus } from '../types';

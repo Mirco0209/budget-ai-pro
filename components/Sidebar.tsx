@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Wallet, BrainCircuit, Settings, LogOut, TrendingUp, User as UserIcon, Globe, Clock, Shield } from 'lucide-react';
+import { LayoutDashboard, Wallet, BrainCircuit, Settings, LogOut, TrendingUp, User as UserIcon, Clock, Shield } from 'lucide-react';
 import { storageService } from '../services/storageService';
-import { User, UserSettings } from '../types';
+import { User } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface SidebarProps {

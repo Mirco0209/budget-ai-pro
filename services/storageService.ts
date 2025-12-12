@@ -1,4 +1,4 @@
-import { Transaction, UserSettings, TransactionType, User, SubscriptionStatus } from '../types';
+import { Transaction, UserSettings, User, SubscriptionStatus } from '../types';
 
 const STORAGE_KEYS = {
   TRANSACTIONS_PREFIX: 'budget_ai_transactions_',

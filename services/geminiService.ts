@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { storageService } from "./storageService";
 
+declare const process: any;
+
 // In a real production app, this key should be proxied via a backend.
 // Since we are mocking the frontend, we assume the environment variable is injected.
 // If testing locally without env, you might need to insert a key here temporarily (NOT RECOMMENDED for commit).

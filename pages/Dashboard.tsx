@@ -223,7 +223,7 @@ const Dashboard: React.FC = () => {
                         cursor={{fill: '#334155', opacity: 0.2}}
                     />
                     <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
-                        {dataForChart.map((entry, index) => (
+                        {dataForChart.map((_, index) => (
                             <Cell key={`cell-${index}`} fill={index === 0 ? '#22c55e' : index === 1 ? '#ef4444' : '#3b82f6'} />
                         ))}
                     </Bar>
@@ -249,7 +249,7 @@ const Dashboard: React.FC = () => {
                               paddingAngle={5}
                               dataKey="value"
                             >
-                              {pieData.map((entry, index) => (
+                              {pieData.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                               ))}
                             </Pie>

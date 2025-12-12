@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ArrowRight, AlertCircle, Globe } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { useLanguage } from '../contexts/LanguageContext';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, CreditCard, Wallet, AlertCircle, LogOut, CheckCircle, X } from 'lucide-react';
+import { Lock, CreditCard, Wallet, LogOut, CheckCircle, X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { storageService } from '../services/storageService';
 
