@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Wallet, BrainCircuit, Settings, LogOut, TrendingUp, User as UserIcon, Clock, Shield } from 'lucide-react';
+import { LayoutDashboard, Wallet, BrainCircuit, Settings, LogOut, TrendingUp, User as UserIcon, Clock, Shield, Globe } from 'lucide-react';
 import { storageService } from '../services/storageService';
-import { User } from '../types';
+import { User, Language } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface SidebarProps {
@@ -97,19 +97,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, onLogout }
         )}
 
         {/* Language Selector */}
-        <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
-           <button 
-             onClick={() => setLanguage('en')}
-             className={`flex-1 flex items-center justify-center py-1.5 rounded-md text-xs font-medium transition-colors ${language === 'en' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+        <div className="relative">
+           <Globe size={16} className="absolute left-3 top-3 text-slate-500" />
+           <select 
+             value={language}
+             onChange={(e) => setLanguage(e.target.value as Language)}
+             className="w-full bg-slate-900 border border-slate-800 rounded-lg py-2 pl-9 pr-3 text-sm text-white focus:outline-none focus:border-slate-700"
            >
-             🇺🇸 EN
-           </button>
-           <button 
-             onClick={() => setLanguage('it')}
-             className={`flex-1 flex items-center justify-center py-1.5 rounded-md text-xs font-medium transition-colors ${language === 'it' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
-           >
-             🇮🇹 IT
-           </button>
+             <option value="en">English (US)</option>
+             <option value="it">Italiano</option>
+             <option value="es">Español</option>
+             <option value="fr">Français</option>
+             <option value="de">Deutsch</option>
+           </select>
         </div>
 
         {/* Health Score - Hide for Admin */}

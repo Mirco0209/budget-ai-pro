@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Calendar, Tag, FileText, ArrowDownLeft, ArrowUpRight, Camera, Loader, Sparkles, Lock, Mic, X, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Calendar, Tag, FileText, ArrowDownLeft, ArrowUpRight, Camera, Loader, Sparkles, Lock, Mic, X, AlertCircle, Square } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { analyzeReceipt, parseNaturalLanguageTransaction } from '../services/geminiService';
 import { Transaction, TransactionType, CATEGORIES, OTHER_SUB_CATEGORIES } from '../types';
@@ -26,7 +26,6 @@ const Transactions: React.FC = () => {
   const [speechError, setSpeechError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Ref to keep the speech recognition instance alive across renders
   const recognitionRef = useRef<any>(null);
   const silenceTimerRef = useRef<any>(null);
   
@@ -35,12 +34,11 @@ const Transactions: React.FC = () => {
   useEffect(() => {
     setTransactions(storageService.getTransactions().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     
-    // Check Plan for Scanner Feature
+    // Allow users to try scan/voice on ALL plans now (updated logic for Base plan inclusion)
     const settings = storageService.getSettings();
-    const allowedPlans = ['medium', 'advanced', 'ultra'];
+    const allowedPlans = ['base', 'medium', 'advanced', 'ultra'];
     setCanUseScanner(allowedPlans.includes(settings.plan));
 
-    // Cleanup function to stop mic if component unmounts
     return () => {
         if (recognitionRef.current) {
             try { recognitionRef.current.stop(); } catch(e) {}
@@ -119,20 +117,19 @@ const Transactions: React.FC = () => {
         recognition.maxAlternatives = 1;
         recognition.continuous = false; 
 
-        // Store in Ref to prevent Garbage Collection
         recognitionRef.current = recognition;
 
         recognition.onstart = () => {
             setIsListening(true);
             setIsFormOpen(true);
-            // Safety timeout: if no result in 10 seconds, stop
+            // Safety timeout: if no result in 15 seconds, stop
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = setTimeout(() => {
                  if (isListening) {
                     stopListening();
                     setSpeechError("Timeout: No speech detected.");
                  }
-            }, 10000);
+            }, 15000);
         };
 
         recognition.onresult = async (event: any) => {
@@ -150,7 +147,7 @@ const Transactions: React.FC = () => {
                     type: data.type || 'expense',
                     date: data.date || new Date().toISOString().split('T')[0],
                     category: data.category || 'Other',
-                    note: data.note || text // Use transcribed text as fallback
+                    note: data.note || text
                 }));
             } catch (err) {
                 console.error(err);
@@ -168,7 +165,9 @@ const Transactions: React.FC = () => {
             if (event.error === 'not-allowed') {
                 setSpeechError("Microphone access denied.");
             } else if (event.error === 'no-speech') {
-                setSpeechError("No speech detected.");
+                // Ignore no-speech if explicitly stopped
+            } else if (event.error === 'aborted') {
+                // Ignore aborted
             } else {
                 setSpeechError(`Error: ${event.error}`);
             }
@@ -176,10 +175,6 @@ const Transactions: React.FC = () => {
 
         recognition.onend = () => {
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-            // We only set isListening to false here. 
-            // If onresult fired, it's already false. 
-            // If onerror fired, it's already false.
-            // This is just a fallback state cleanup.
             setIsListening(false);
         };
 
@@ -192,6 +187,7 @@ const Transactions: React.FC = () => {
   };
 
   const stopListening = () => {
+      // Manually stop. This triggers onresult if there are partial results, or onend.
       if (recognitionRef.current) {
           try { recognitionRef.current.stop(); } catch(e) {}
           setIsListening(false);
@@ -341,12 +337,17 @@ const Transactions: React.FC = () => {
                    {isListening && (
                        <>
                            <p className="text-sm text-slate-300 mb-6 italic max-w-xs">"{t('voiceCommandHint')}"</p>
+                           {/* Stop Button */}
                            <button 
                              type="button" 
-                             onClick={stopListening}
-                             className="bg-slate-800 text-white px-4 py-2 rounded-full text-sm border border-slate-700 hover:bg-slate-700"
+                             onClick={(e) => {
+                                 e.stopPropagation(); // Prevent propagation
+                                 stopListening();
+                             }}
+                             className="flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-full text-lg font-bold border border-red-500 hover:bg-red-500 transition-all shadow-lg shadow-red-900/40 z-50 cursor-pointer hover:scale-105 active:scale-95"
                            >
-                             Cancel
+                             <Square size={20} fill="currentColor" />
+                             <span>{t('stopListening')}</span>
                            </button>
                        </>
                    )}

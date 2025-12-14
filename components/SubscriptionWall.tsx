@@ -1,12 +1,12 @@
-import React from 'react';
-import { Lock, CreditCard, Wallet, LogOut, CheckCircle, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Lock, CreditCard, LogOut, CheckCircle, X, User as UserIcon, Calendar, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { storageService } from '../services/storageService';
 
 interface SubscriptionWallProps {
   onLogout?: () => void;
   onPaymentSuccess: () => void;
-  onClose?: () => void; // Optional: If provided, allows closing the modal (for upgrades)
+  onClose?: () => void;
   title?: string;
   description?: string;
 }
@@ -16,114 +16,196 @@ const SubscriptionWall: React.FC<SubscriptionWallProps> = ({
   onPaymentSuccess, 
   onClose,
   title,
-  description 
+  description
 }) => {
   const { t } = useLanguage();
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [cardData, setCardData] = useState({
+    holder: '',
+    number: '',
+    expiry: '',
+    cvv: ''
+  });
+  const [error, setError] = useState('');
 
-  const handleDeleteAccount = () => {
-    if (window.confirm('Are you sure? This cannot be undone.')) {
-      storageService.auth.deleteAccount();
-      if (onLogout) onLogout();
+  const handlePayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (paymentMethod === 'card') {
+       if (!cardData.holder || !cardData.number || !cardData.expiry || !cardData.cvv) {
+           setError(t('fillAllFields'));
+           return;
+       }
     }
+
+    setIsProcessing(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+        setIsProcessing(false);
+        onPaymentSuccess();
+    }, 2000);
   };
 
-  const handleSimulatePayment = () => {
-    // In a real app, this would be a webhook listener or API call
-    if (window.confirm('Simulate successful payment verification?')) {
-        storageService.activateSubscription();
-        onPaymentSuccess();
+  const handleDeleteAccount = () => {
+    if (confirm(t('deleteWarning'))) {
+       storageService.auth.deleteAccount();
+       if (onLogout) onLogout();
+       else window.location.reload(); 
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
-        
-        {/* Close Button (Only if onClose provided) */}
-        {onClose && (
-          <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 text-slate-500 hover:text-white z-10 p-1 bg-slate-800/50 rounded-full transition-colors"
-          >
-            <X size={20} />
-          </button>
-        )}
-
-        {/* Left Side: Alert */}
-        <div className="bg-gradient-to-br from-red-900/50 to-slate-900 p-8 md:w-1/3 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-800">
-           <div>
-              <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-xl flex items-center justify-center mb-4">
-                <Lock size={24} />
-              </div>
-              <h2 className="text-xl font-bold text-white mb-2">{title || t('trialExpiredTitle')}</h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                {description || t('trialExpiredDesc')}
-              </p>
+    <div className="fixed inset-0 bg-slate-950/95 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="p-6 text-center border-b border-slate-800 bg-slate-950/50">
+           <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20 animate-pulse">
+              <Lock size={32} className="text-white" />
            </div>
-           
-           {onLogout && (
-             <div className="mt-8">
-                <button 
-                  onClick={handleDeleteAccount}
-                  className="flex items-center text-xs text-red-400 hover:text-red-300 transition-colors"
-                >
-                  <LogOut size={14} className="mr-2" />
-                  {t('deleteAccount')}
-                </button>
-                <p className="text-[10px] text-slate-600 mt-1">{t('deleteWarning')}</p>
-             </div>
+           <h2 className="text-2xl font-bold text-white mb-2">{title || t('trialExpiredTitle')}</h2>
+           <p className="text-slate-400 text-sm max-w-sm mx-auto">
+             {description || t('trialExpiredDesc')}
+           </p>
+           {onClose && (
+               <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white">
+                   <X size={24} />
+               </button>
            )}
         </div>
 
-        {/* Right Side: Payment Info */}
-        <div className="p-8 md:w-2/3">
-           <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
-             <CreditCard size={20} className="mr-2 text-primary" />
-             {t('paymentMethod')}
-           </h3>
+        {/* Payment Form */}
+        <div className="p-6 overflow-y-auto flex-1">
+           {error && (
+             <div className="mb-4 bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm flex items-center">
+                <AlertCircle size={16} className="mr-2 shrink-0" />
+                {error}
+             </div>
+           )}
 
-           <div className="space-y-6">
-              {/* Bank Transfer Option */}
-              <div className="bg-slate-950 rounded-xl p-4 border border-slate-800">
-                 <div className="flex items-center mb-3">
-                    <Wallet size={18} className="text-slate-400 mr-2" />
-                    <span className="font-medium text-white">{t('bankTransfer')}</span>
-                 </div>
-                 <div className="space-y-2 text-sm">
-                    <div className="flex justify-between border-b border-slate-800/50 pb-2">
-                       <span className="text-slate-500">{t('beneficiary')}</span>
-                       <span className="text-slate-300 font-mono">YOUR NAME HERE</span> {/* INSERT YOUR NAME */}
-                    </div>
-                    <div className="flex justify-between border-b border-slate-800/50 pb-2">
-                       <span className="text-slate-500">{t('iban')}</span>
-                       <span className="text-slate-300 font-mono select-all">IT00 X000 0000 0000 0000</span> {/* INSERT IBAN */}
-                    </div>
-                 </div>
-              </div>
-
-              {/* PayPal Option */}
-              <div className="bg-slate-950 rounded-xl p-4 border border-slate-800">
-                 <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                        <span className="font-bold text-blue-400 italic mr-2">PayPal</span>
-                        <span className="text-sm text-slate-300">user@example.com</span> {/* INSERT PAYPAL EMAIL */}
-                    </div>
-                 </div>
-              </div>
-           </div>
-
-           <div className="mt-8 pt-6 border-t border-slate-800">
+           <div className="flex space-x-2 mb-6 p-1 bg-slate-950 rounded-xl border border-slate-800">
               <button 
-                onClick={handleSimulatePayment}
-                className="w-full bg-green-600 hover:bg-green-500 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center shadow-lg shadow-green-900/20"
+                onClick={() => setPaymentMethod('card')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center space-x-2 ${paymentMethod === 'card' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
               >
-                <CheckCircle size={18} className="mr-2" />
-                {t('confirmPayment')}
+                 <CreditCard size={16} />
+                 <span>Card</span>
               </button>
-              <p className="text-center text-xs text-slate-500 mt-3">
-                 {t('contactSupport')}
-              </p>
+              <button 
+                onClick={() => setPaymentMethod('paypal')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center space-x-2 ${paymentMethod === 'paypal' ? 'bg-[#003087] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                 <span className="font-bold italic">PayPal</span>
+              </button>
            </div>
+
+           <form onSubmit={handlePayment} className="space-y-4">
+               {paymentMethod === 'card' ? (
+                   <>
+                       <div>
+                           <label className="block text-xs text-slate-400 mb-1">{t('cardHolder')}</label>
+                           <div className="relative">
+                               <UserIcon className="absolute left-3 top-3 text-slate-500" size={16} />
+                               <input 
+                                   type="text" 
+                                   className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 pl-10 pr-3 text-white text-sm focus:border-primary outline-none"
+                                   placeholder="John Doe"
+                                   value={cardData.holder}
+                                   onChange={e => setCardData({...cardData, holder: e.target.value})}
+                               />
+                           </div>
+                       </div>
+                       <div>
+                           <label className="block text-xs text-slate-400 mb-1">{t('cardNumber')}</label>
+                           <div className="relative">
+                               <CreditCard className="absolute left-3 top-3 text-slate-500" size={16} />
+                               <input 
+                                   type="text" 
+                                   className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 pl-10 pr-3 text-white text-sm focus:border-primary outline-none"
+                                   placeholder="0000 0000 0000 0000"
+                                   value={cardData.number}
+                                   onChange={e => setCardData({...cardData, number: e.target.value})}
+                               />
+                           </div>
+                       </div>
+                       <div className="flex space-x-3">
+                           <div className="flex-1">
+                               <label className="block text-xs text-slate-400 mb-1">{t('expiryDate')}</label>
+                               <div className="relative">
+                                   <Calendar className="absolute left-3 top-3 text-slate-500" size={16} />
+                                   <input 
+                                       type="text" 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 pl-10 pr-3 text-white text-sm focus:border-primary outline-none"
+                                       placeholder="MM/YY"
+                                       value={cardData.expiry}
+                                       onChange={e => setCardData({...cardData, expiry: e.target.value})}
+                                   />
+                               </div>
+                           </div>
+                           <div className="flex-1">
+                               <label className="block text-xs text-slate-400 mb-1">{t('cvv')}</label>
+                               <div className="relative">
+                                   <Lock className="absolute left-3 top-3 text-slate-500" size={16} />
+                                   <input 
+                                       type="text" 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 pl-10 pr-3 text-white text-sm focus:border-primary outline-none"
+                                       placeholder="123"
+                                       value={cardData.cvv}
+                                       onChange={e => setCardData({...cardData, cvv: e.target.value})}
+                                   />
+                               </div>
+                           </div>
+                       </div>
+                   </>
+               ) : (
+                   <div className="text-center py-8">
+                       <p className="text-slate-300 text-sm mb-4">You will be redirected to PayPal to complete your secure payment.</p>
+                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto opacity-80">
+                           <span className="text-[#003087] font-bold text-2xl italic">P</span>
+                       </div>
+                   </div>
+               )}
+
+               <button 
+                  type="submit"
+                  disabled={isProcessing}
+                  className="w-full bg-primary hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center mt-6"
+               >
+                  {isProcessing ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                        {t('processing')}
+                      </>
+                  ) : (
+                      <>
+                         <CheckCircle size={18} className="mr-2" />
+                         {paymentMethod === 'card' ? t('payWithCard') : t('payWithPaypal')}
+                      </>
+                  )}
+               </button>
+           </form>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-xs">
+           <button 
+             onClick={handleDeleteAccount}
+             className="text-red-400 hover:text-red-300 flex items-center space-x-1"
+           >
+              <LogOut size={12} />
+              <span>{t('deleteAccount')}</span>
+           </button>
+           
+           {onLogout && (
+               <button 
+                 onClick={onLogout}
+                 className="text-slate-500 hover:text-slate-300"
+               >
+                 {t('signOut')}
+               </button>
+           )}
         </div>
       </div>
     </div>

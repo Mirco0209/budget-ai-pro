@@ -1,7 +1,7 @@
 
 export type TransactionType = 'income' | 'expense' | 'refund';
 
-export type Language = 'en' | 'it';
+export type Language = 'en' | 'it' | 'es' | 'fr' | 'de';
 
 export type SubscriptionStatus = 'trial' | 'active' | 'expired';
 
@@ -64,7 +64,7 @@ export const OTHER_SUB_CATEGORIES = [
 ];
 
 export const PLANS = {
-  base: { name: 'Savings Base', price: '5€', aiLimit: 0 },
+  base: { name: 'Savings Base', price: '5€', aiLimit: 1 }, // Changed from 0 to 1
   medium: { name: 'Savings Medium', price: '7€', aiLimit: 5 },
   advanced: { name: 'Savings Advanced', price: '10€', aiLimit: 15 },
   ultra: { name: 'Savings Ultra', price: '15€', aiLimit: 9999 },

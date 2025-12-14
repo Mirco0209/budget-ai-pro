@@ -101,6 +101,7 @@ export const translations = {
     processingAudio: "AI Processing...",
     micError: "Microphone access denied or not supported.",
     voiceCommandHint: "Say something like: 'Spent 20€ for pizza yesterday'",
+    stopListening: "Stop & Send",
     
     // Advisor
     advisorTitle: "Financial Advisor",
@@ -109,7 +110,7 @@ export const translations = {
     inputPlaceholder: "Ask about your budget, savings tips, or expense analysis...",
     geminiDisclaimer: "Gemini can make mistakes. Consider checking important financial decisions.",
     advisorLocked: "Advisor Locked",
-    advisorLockedDesc: "AI chat is not available on the Base plan. Upgrade to get personalized financial advice.",
+    advisorLockedDesc: "AI chat is limited on the Base plan. Upgrade to get more financial advice.",
     unlockAdvisor: "Unlock Advisor",
 
     // Plans & Settings
@@ -151,11 +152,19 @@ export const translations = {
     paypal: "PayPal",
     beneficiary: "Beneficiary",
     iban: "IBAN",
-    confirmPayment: "I have sent the payment",
+    confirmPayment: "Pay Now",
     deleteAccount: "Delete Account",
     deleteWarning: "This will permanently delete your data.",
     contactSupport: "If you have already paid, please contact support.",
     daysLeft: "days left in trial",
+    cardHolder: "Card Holder Name",
+    cardNumber: "Card Number",
+    expiryDate: "Expiry Date",
+    cvv: "CVV",
+    payWithCard: "Pay with Card",
+    payWithPaypal: "Pay with PayPal",
+    processing: "Processing...",
+    fillAllFields: "Please fill in all credit card fields.",
 
     // Admin
     userManagement: "User Management",
@@ -324,6 +333,7 @@ export const translations = {
     processingAudio: "Elaborazione AI...",
     micError: "Accesso al microfono negato o non supportato.",
     voiceCommandHint: "Dì qualcosa come: 'Ho speso 20 euro per la pizza ieri'",
+    stopListening: "Stop & Invia",
     
     // Advisor
     advisorTitle: "Consulente Finanziario",
@@ -332,7 +342,7 @@ export const translations = {
     inputPlaceholder: "Chiedi del tuo budget, consigli di risparmio o analisi spese...",
     geminiDisclaimer: "Gemini può commettere errori. Controlla le decisioni finanziarie importanti.",
     advisorLocked: "Consulente Bloccato",
-    advisorLockedDesc: "La chat AI non è disponibile nel piano Base. Effettua l'upgrade per ricevere consigli finanziari personalizzati.",
+    advisorLockedDesc: "La chat AI è limitata nel piano Base. Effettua l'upgrade per ricevere più consigli finanziari.",
     unlockAdvisor: "Sblocca Consulente",
     
     // Subscription Wall & Payment
@@ -345,11 +355,19 @@ export const translations = {
     paypal: "PayPal",
     beneficiary: "Beneficiario",
     iban: "IBAN",
-    confirmPayment: "Ho effettuato il pagamento",
+    confirmPayment: "Paga Ora",
     deleteAccount: "Elimina Account",
     deleteWarning: "Questo cancellerà permanentemente i tuoi dati.",
     contactSupport: "Se hai già pagato, contatta il supporto.",
     daysLeft: "giorni rimasti di prova",
+    cardHolder: "Titolare Carta",
+    cardNumber: "Numero Carta",
+    expiryDate: "Scadenza (MM/YY)",
+    cvv: "CVV",
+    payWithCard: "Paga con Carta",
+    payWithPaypal: "Paga con PayPal",
+    processing: "Elaborazione...",
+    fillAllFields: "Compila tutti i campi della carta.",
 
     // Admin
     userManagement: "Gestione Utenti",
@@ -389,9 +407,88 @@ export const translations = {
     'Investments': 'Investimenti',
     'Kids': 'Bambini',
     'General': 'Generale'
+  },
+  es: {
+    dashboard: "Panel",
+    transactions: "Transacciones",
+    advisor: "Asesor IA",
+    plans: "Ajustes",
+    admin: "Admin",
+    appName: "Budget AI",
+    totalIncome: "Ingresos",
+    totalExpenses: "Gastos",
+    netBalance: "Balance",
+    listening: "Escuchando...",
+    voiceInput: "Voz",
+    stopListening: "Parar y Enviar",
+    scanAi: "Escanear IA",
+    advisorTitle: "Asesor Financiero",
+    welcomeMsg: "¡Hola! Soy Budget AI. ¿Cómo puedo ayudarte a ahorrar hoy?",
+    inputPlaceholder: "Pregunta sobre tu presupuesto...",
+    userManagement: "Gestión de Usuarios",
+    totalUsers: "Usuarios Totales",
+    activeSubs: "Suscripciones Activas",
+    status: "Estado",
+    plan: "Plan",
+    actions: "Acciones",
+    deleteUser: "Eliminar Usuario",
+    extendTrial: "Extender Prueba"
+  },
+  fr: {
+    dashboard: "Tableau de bord",
+    transactions: "Transactions",
+    advisor: "Conseiller IA",
+    plans: "Paramètres",
+    admin: "Admin",
+    appName: "Budget AI",
+    totalIncome: "Revenus",
+    totalExpenses: "Dépenses",
+    netBalance: "Solde",
+    listening: "Écoute...",
+    voiceInput: "Voix",
+    stopListening: "Arrêter et Envoyer",
+    scanAi: "Scan IA",
+    advisorTitle: "Conseiller Financier",
+    welcomeMsg: "Bonjour! Je suis Budget AI. Comment puis-je vous aider à économiser?",
+    inputPlaceholder: "Posez des questions sur votre budget...",
+    userManagement: "Gestion des utilisateurs",
+    totalUsers: "Total utilisateurs",
+    activeSubs: "Abos actifs",
+    status: "Statut",
+    plan: "Plan",
+    actions: "Actions",
+    deleteUser: "Supprimer",
+    extendTrial: "Prolonger l'essai"
+  },
+  de: {
+    dashboard: "Dashboard",
+    transactions: "Transaktionen",
+    advisor: "KI-Berater",
+    plans: "Einstellungen",
+    admin: "Admin",
+    appName: "Budget AI",
+    totalIncome: "Einnahmen",
+    totalExpenses: "Ausgaben",
+    netBalance: "Saldo",
+    listening: "Zuhören...",
+    voiceInput: "Stimme",
+    stopListening: "Stoppen & Senden",
+    scanAi: "KI-Scan",
+    advisorTitle: "Finanzberater",
+    welcomeMsg: "Hallo! Ich bin Budget AI. Wie kann ich Ihnen heute beim Sparen helfen?",
+    inputPlaceholder: "Fragen Sie nach Ihrem Budget...",
+    userManagement: "Benutzerverwaltung",
+    totalUsers: "Benutzer Gesamt",
+    activeSubs: "Aktive Abos",
+    status: "Status",
+    plan: "Plan",
+    actions: "Aktionen",
+    deleteUser: "Löschen",
+    extendTrial: "Test verlängern"
   }
 };
 
 export const getTranslation = (lang: Language, key: keyof typeof translations['en']) => {
-  return translations[lang][key] || translations['en'][key] || key;
+  const langPack = translations[lang] || translations['en'];
+  return langPack[key as keyof typeof langPack] || translations['en'][key] || key;
 };

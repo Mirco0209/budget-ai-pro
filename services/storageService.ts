@@ -1,3 +1,4 @@
+
 import { Transaction, UserSettings, User, SubscriptionStatus } from '../types';
 
 const STORAGE_KEYS = {
@@ -57,8 +58,14 @@ export const storageService = {
   // Auth Methods
   auth: {
     getUsers: (): User[] => {
-      const stored = localStorage.getItem(STORAGE_KEYS.USERS);
-      return stored ? JSON.parse(stored) : [];
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.USERS);
+        const parsed = stored ? JSON.parse(stored) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error("Failed to parse users from storage", error);
+        return [];
+      }
     },
 
     register: (user: Omit<User, 'id' | 'createdAt'>) => {
@@ -140,8 +147,12 @@ export const storageService = {
     },
 
     getCurrentUser: (): User | null => {
-      const stored = localStorage.getItem(STORAGE_KEYS.CURRENT_SESSION);
-      return stored ? JSON.parse(stored) : null;
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.CURRENT_SESSION);
+        return stored ? JSON.parse(stored) : null;
+      } catch (e) {
+        return null;
+      }
     },
     
     updateCurrentUser: (data: Partial<User>) => {
@@ -186,10 +197,15 @@ export const storageService = {
       // Inject Demo user for Admin visualization
       // FIX: Read actual settings from storage if they exist, to show updated plan
       const demoId = 'demo_user_id';
-      const demoSettingsStr = localStorage.getItem(`${STORAGE_KEYS.SETTINGS_PREFIX}${demoId}`);
-      const demoSettings = demoSettingsStr 
-          ? JSON.parse(demoSettingsStr) 
-          : { ...DEFAULT_SETTINGS, username: 'Mirco (Demo)', subscriptionStatus: 'active' as const };
+      let demoSettings;
+      try {
+        const demoSettingsStr = localStorage.getItem(`${STORAGE_KEYS.SETTINGS_PREFIX}${demoId}`);
+        demoSettings = demoSettingsStr 
+            ? JSON.parse(demoSettingsStr) 
+            : { ...DEFAULT_SETTINGS, username: 'Mirco (Demo)', subscriptionStatus: 'active' as const };
+      } catch (e) {
+        demoSettings = { ...DEFAULT_SETTINGS, username: 'Mirco (Demo)', subscriptionStatus: 'active' as const };
+      }
 
       const demoUser = {
         id: demoId,
@@ -201,21 +217,34 @@ export const storageService = {
       };
 
       const mappedUsers = users.map(user => {
-        const settingsStr = localStorage.getItem(`${STORAGE_KEYS.SETTINGS_PREFIX}${user.id}`);
-        const settings = settingsStr ? JSON.parse(settingsStr) : DEFAULT_SETTINGS;
-        
-        // Calculate trial days left
-        const created = new Date(user.createdAt).getTime();
-        const now = new Date().getTime();
-        const diffDays = (now - created) / (1000 * 3600 * 24);
-        const trialDaysLeft = Math.max(0, Math.ceil(7 - diffDays));
+        try {
+          // If user object is malformed, skip logic
+          if (!user || !user.id) return null;
 
-        return {
-          ...user,
-          settings,
-          trialDaysLeft
-        };
-      });
+          const settingsStr = localStorage.getItem(`${STORAGE_KEYS.SETTINGS_PREFIX}${user.id}`);
+          const settings = settingsStr ? JSON.parse(settingsStr) : DEFAULT_SETTINGS;
+          
+          // Calculate trial days left
+          let trialDaysLeft = 0;
+          if (user.createdAt) {
+              const created = new Date(user.createdAt).getTime();
+              const now = new Date().getTime();
+              if (!isNaN(created)) {
+                const diffDays = (now - created) / (1000 * 3600 * 24);
+                trialDaysLeft = Math.max(0, Math.ceil(7 - diffDays));
+              }
+          }
+
+          return {
+            ...user,
+            settings: settings || DEFAULT_SETTINGS, // Fallback if settings null
+            trialDaysLeft
+          };
+        } catch (error) {
+          console.warn("Skipping corrupt user data", error);
+          return null;
+        }
+      }).filter(u => u !== null); // Remove nulls
       
       // Prepend demo user
       return [demoUser, ...mappedUsers];
@@ -394,6 +423,8 @@ export const storageService = {
                 localStorage.setItem(key, JSON.stringify(settings));
              }
         }
+        // Ensure language is valid, default to en if missing
+        if (!settings.language) settings.language = 'en';
         return settings;
     }
 

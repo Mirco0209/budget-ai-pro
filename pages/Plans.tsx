@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, Zap, Camera, Activity, X, User as UserIcon, Globe, DollarSign, Download, Save, CreditCard, Upload } from 'lucide-react';
-import { PLANS, UserSettings, User } from '../types';
+import { PLANS, UserSettings, User, Language } from '../types';
 import { storageService } from '../services/storageService';
 import SubscriptionWall from '../components/SubscriptionWall';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -169,11 +169,14 @@ const Plans: React.FC = () => {
                         </label>
                          <select 
                             value={language}
-                            onChange={(e) => setLanguage(e.target.value as any)}
+                            onChange={(e) => setLanguage(e.target.value as Language)}
                             className="w-full bg-slate-950 border border-slate-800 rounded-lg py-3 px-4 text-white focus:border-primary outline-none"
                         >
                             <option value="en">English 🇺🇸</option>
                             <option value="it">Italiano 🇮🇹</option>
+                            <option value="es">Español 🇪🇸</option>
+                            <option value="fr">Français 🇫🇷</option>
+                            <option value="de">Deutsch 🇩🇪</option>
                         </select>
                     </div>
                 </div>
@@ -296,8 +299,8 @@ const Plans: React.FC = () => {
                         <Zap size={12} className={`mr-2 ${plan.aiLimit > 0 ? 'text-yellow-400' : 'text-slate-600'}`} />
                         {plan.aiLimit === 0 ? t('noAi') : plan.aiLimit > 1000 ? t('unltdAi') : `${plan.aiLimit} ${t('aiChats')}`}
                     </div>
-                    <div className={`flex items-center text-xs ${hasScanner(key) ? 'text-slate-300' : 'text-slate-600'}`}>
-                        {hasScanner(key) ? <Camera size={12} className="mr-2 text-blue-400" /> : <X size={12} className="mr-2" />}
+                    <div className={`flex items-center text-xs ${hasScanner(key) || key === 'base' ? 'text-slate-300' : 'text-slate-600'}`}>
+                        {(hasScanner(key) || key === 'base') ? <Camera size={12} className="mr-2 text-blue-400" /> : <X size={12} className="mr-2" />}
                         {t('scanner')}
                     </div>
                     <div className={`flex items-center text-xs ${hasForecast(key) ? 'text-slate-300' : 'text-slate-600'}`}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, User, Search, Edit2, Trash2, Key, Calendar } from 'lucide-react';
+import { Shield, User, Search, Edit2, Trash2, Key, Calendar, RefreshCcw } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { useLanguage } from '../contexts/LanguageContext';
 import { UserSettings, PLANS, SubscriptionStatus } from '../types';
@@ -17,6 +17,7 @@ const Admin: React.FC = () => {
   const { t } = useLanguage();
   const [users, setUsers] = useState<UserData[]>([]);
   const [search, setSearch] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Modal State
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
@@ -29,15 +30,27 @@ const Admin: React.FC = () => {
   }, []);
 
   const loadUsers = () => {
-    const allData = storageService.admin.getAllUsersData();
-    setUsers(allData as UserData[]);
+    try {
+        const allData = storageService.admin.getAllUsersData();
+        // Ensure allData is an array and filter out any potential nulls if styling breaks
+        if (Array.isArray(allData)) {
+            setUsers(allData as UserData[]);
+        } else {
+            setUsers([]);
+        }
+    } catch (e) {
+        console.error("Failed to load users", e);
+        setUsers([]);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleEditClick = (user: UserData) => {
     setEditingUser(user);
     setEditForm({ 
-        plan: user.settings.plan, 
-        status: user.settings.subscriptionStatus 
+        plan: user.settings.plan || 'base', 
+        status: user.settings.subscriptionStatus || 'trial' 
     });
   };
 
@@ -58,7 +71,7 @@ const Admin: React.FC = () => {
           storageService.admin.resetUserPassword(resetPasswordUser.id, newPassword);
           setResetPasswordUser(null);
           setNewPassword('');
-          loadUsers(); // Refresh mostly useless here but keeps state sync
+          loadUsers(); 
           alert('Password updated successfully');
       }
   };
@@ -78,13 +91,13 @@ const Admin: React.FC = () => {
   };
 
   const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(search.toLowerCase()) || 
-    u.email.toLowerCase().includes(search.toLowerCase())
+    (u.name && u.name.toLowerCase().includes(search.toLowerCase())) || 
+    (u.email && u.email.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
-    <div className="space-y-6 pb-10">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 pb-20">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Shield className="text-primary" />
@@ -92,17 +105,20 @@ const Admin: React.FC = () => {
           </h2>
           <p className="text-slate-400">Total System Control</p>
         </div>
-        <div className="flex space-x-4">
-            <div className="bg-slate-900 px-4 py-2 rounded-lg border border-slate-800 text-center">
+        <div className="flex space-x-4 w-full md:w-auto items-center">
+            <div className="flex-1 md:flex-none bg-slate-900 px-4 py-2 rounded-lg border border-slate-800 text-center">
                 <p className="text-xs text-slate-500 uppercase">{t('totalUsers')}</p>
                 <p className="font-bold text-white text-lg">{users.length}</p>
             </div>
-            <div className="bg-slate-900 px-4 py-2 rounded-lg border border-slate-800 text-center">
+            <div className="flex-1 md:flex-none bg-slate-900 px-4 py-2 rounded-lg border border-slate-800 text-center">
                 <p className="text-xs text-slate-500 uppercase">{t('activeSubs')}</p>
                 <p className="font-bold text-green-400 text-lg">
-                    {users.filter(u => u.settings.subscriptionStatus === 'active').length}
+                    {users.filter(u => u.settings?.subscriptionStatus === 'active').length}
                 </p>
             </div>
+            <button onClick={loadUsers} className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700">
+                <RefreshCcw size={18} className="text-slate-400" />
+            </button>
         </div>
       </div>
 
@@ -118,8 +134,12 @@ const Admin: React.FC = () => {
         />
       </div>
 
-      {/* Users Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+      {/* Loading State */}
+      {isLoading && <div className="text-center py-10 text-slate-500">Loading users...</div>}
+
+      {/* Desktop Table View */}
+      {!isLoading && (
+        <div className="hidden md:block bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -147,15 +167,15 @@ const Admin: React.FC = () => {
                   </td>
                   <td className="p-4">
                       <span className="text-sm text-slate-300 capitalize">
-                          {user.settings.plan}
+                          {user.settings?.plan || 'base'}
                       </span>
                   </td>
                   <td className="p-4">
-                     {user.settings.subscriptionStatus === 'active' ? (
+                     {user.settings?.subscriptionStatus === 'active' ? (
                          <span className="inline-flex items-center px-2 py-1 rounded-md bg-green-500/10 text-green-400 text-xs font-medium">
                              Active
                          </span>
-                     ) : user.settings.subscriptionStatus === 'trial' ? (
+                     ) : user.settings?.subscriptionStatus === 'trial' ? (
                          <div className="flex flex-col">
                             <span className="inline-flex items-center px-2 py-1 rounded-md bg-yellow-500/10 text-yellow-400 text-xs font-medium w-fit">
                                 Trial
@@ -169,7 +189,7 @@ const Admin: React.FC = () => {
                      )}
                   </td>
                   <td className="p-4 text-sm text-slate-500 font-mono">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                   </td>
                   <td className="p-4 text-right">
                       <div className="flex justify-end space-x-2">
@@ -205,15 +225,74 @@ const Admin: React.FC = () => {
                   </td>
                 </tr>
               ))}
-              {filteredUsers.length === 0 && (
-                 <tr>
-                    <td colSpan={5} className="p-8 text-center text-slate-500">No users found.</td>
-                 </tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
+      )}
+
+      {/* Mobile Card View */}
+      {!isLoading && (
+        <div className="md:hidden space-y-4">
+         {filteredUsers.map(user => (
+             <div key={user.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4 shadow-sm">
+                 <div className="flex items-center justify-between">
+                     <div className="flex items-center space-x-3">
+                         <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
+                             <User size={18} className="text-slate-400" />
+                         </div>
+                         <div>
+                             <p className="font-bold text-white text-sm">{user.name}</p>
+                             <p className="text-xs text-slate-500">{user.email}</p>
+                         </div>
+                     </div>
+                     <span className={`text-xs px-2 py-1 rounded font-bold capitalize ${
+                         user.settings?.subscriptionStatus === 'active' ? 'bg-green-500/10 text-green-400' : 
+                         user.settings?.subscriptionStatus === 'trial' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-red-500/10 text-red-400'
+                     }`}>
+                         {user.settings?.subscriptionStatus || 'trial'}
+                     </span>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 border-t border-slate-800 pt-3">
+                     <div>
+                         <span className="block text-slate-600 uppercase text-[10px]">Plan</span>
+                         <span className="capitalize text-white">{user.settings?.plan || 'base'}</span>
+                     </div>
+                     <div>
+                         <span className="block text-slate-600 uppercase text-[10px]">Joined</span>
+                         <span className="text-white">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</span>
+                     </div>
+                 </div>
+
+                 <div className="flex justify-between items-center pt-2 gap-2">
+                      <button 
+                        onClick={() => handleExtendTrial(user.id)}
+                        className="flex-1 py-3 bg-slate-800 text-yellow-400 rounded-lg text-xs font-bold flex justify-center items-center active:scale-95 transition-transform"
+                      >
+                         <Calendar size={14} className="mr-1" />
+                         +7 Days
+                      </button>
+                      <button 
+                        onClick={() => handleEditClick(user)}
+                        className="flex-1 py-3 bg-slate-800 text-blue-400 rounded-lg text-xs font-bold flex justify-center items-center active:scale-95 transition-transform"
+                      >
+                         <Edit2 size={14} className="mr-1" />
+                         Edit
+                      </button>
+                      <button 
+                         onClick={() => handleDelete(user.id)}
+                         className="flex-1 py-3 bg-slate-800 text-red-400 rounded-lg text-xs font-bold flex justify-center items-center active:scale-95 transition-transform"
+                      >
+                         <Trash2 size={14} className="mr-1" />
+                         Del
+                      </button>
+                 </div>
+             </div>
+         ))}
+         {filteredUsers.length === 0 && <p className="text-center text-slate-500">No users found.</p>}
+      </div>
+      )}
 
       {/* Edit Subscription Modal */}
       {editingUser && (
